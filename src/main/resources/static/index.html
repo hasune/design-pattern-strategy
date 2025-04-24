@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디자인 패턴 데모</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        select, input, button {
+            padding: 8px;
+            margin: 5px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-left: 4px solid #4CAF50;
+        }
+        .explanation {
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+            padding: 10px;
+            margin: 15px 0;
+        }
+        .nav-links {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .nav-links a {
+            display: inline-block;
+            margin-right: 15px;
+            color: #2196F3;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>전략 패턴 (Strategy Pattern) 데모</h1>
+    
+    <div class="nav-links">
+        <h3>예제 목록:</h3>
+        <a href="/">복잡한 전략 패턴 예제 (Factory 사용)</a>
+        <a href="/simple-strategy.html">간단한 전략 패턴 예제</a>
+    </div>
+    
+    <div class="explanation">
+        <h3>전략 패턴이란?</h3>
+        <p>전략 패턴은 실행 중에 알고리즘을 선택할 수 있게 하는 행동 디자인 패턴입니다. 
+           이 데모에서는 다양한 할인 전략(퍼센트 할인, 고정 금액 할인 등)을 동적으로 변경하며 
+           동일한 상품에 대해 다른 할인 결과를 얻을 수 있습니다.</p>
+    </div>
+    
+    <div class="section">
+        <h2>1. 할인 전략 선택</h2>
+        <select id="strategySelect">
+            <option value="none">할인 없음</option>
+            <option value="percentage">퍼센트 할인 (10%)</option>
+            <option value="percentage15">퍼센트 할인 (15%)</option>
+            <option value="fixed">고정 금액 할인 (1000원)</option>
+            <option value="fixed2000">고정 금액 할인 (2000원)</option>
+        </select>
+        <button id="changeStrategy">전략 변경</button>
+        <div id="currentStrategy" class="result">현재 전략: 할인 없음</div>
+    </div>
+    
+    <div class="section">
+        <h2>2. 가격 계산</h2>
+        <input type="number" id="priceInput" placeholder="가격 입력" value="10000">
+        <button id="calculatePrice">가격 계산</button>
+        <div id="priceResult" class="result">
+            결과가 여기에 표시됩니다.
+        </div>
+    </div>
+    
+    <script>
+        // 페이지 로드 시 현재 전략 정보 가져오기
+        window.addEventListener('DOMContentLoaded', async () => {
+            await fetchCurrentStrategy();
+        });
+        
+        // 전략 변경
+        document.getElementById('changeStrategy').addEventListener('click', async () => {
+            const strategyName = document.getElementById('strategySelect').value;
+            
+            try {
+                const response = await fetch('/api/discount/strategy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ strategyName })
+                });
+                
+                const data = await response.json();
+                document.getElementById('currentStrategy').textContent = `현재 전략: ${data.strategyChanged}`;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+        
+        // 가격 계산
+        document.getElementById('calculatePrice').addEventListener('click', async () => {
+            const price = document.getElementById('priceInput').value;
+            
+            try {
+                const response = await fetch('/api/discount/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ price: parseFloat(price) })
+                });
+                
+                const data = await response.json();
+                document.getElementById('priceResult').innerHTML = `
+                    원래 가격: ${data.originalPrice.toLocaleString()}원<br>
+                    할인 적용 가격: ${data.discountedPrice.toLocaleString()}원<br>
+                    적용된 전략: ${data.appliedStrategy}
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+        
+        // 현재 전략 가져오기
+        async function fetchCurrentStrategy() {
+            try {
+                const response = await fetch('/api/discount/strategy');
+                const data = await response.json();
+                document.getElementById('currentStrategy').textContent = `현재 전략: ${data.currentStrategy}`;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
